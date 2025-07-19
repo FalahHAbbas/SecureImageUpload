@@ -1,0 +1,115 @@
+
+
+services:
+  appservice:
+    build:
+      context: .
+      dockerfile: src/AppService/Dockerfile
+    ports:
+      - "7071:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - StorageServiceUrl=http://storageservice:8080/
+      - StorageServiceExternalUrl=http://localhost:7072/
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - storageservice
+      - prometheus
+      - loki
+      - grafana
+      - zipkin
+    networks:
+      secure_image_upload_network:
+        aliases:
+          - appservice
+
+  storageservice:
+    build:
+      context: .
+      dockerfile: src/StorageService/Dockerfile
+    ports:
+      - "7072:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - prometheus
+      - loki
+      - grafana
+      - zipkin
+    networks:
+      secure_image_upload_network:
+        aliases:
+          - storageservice
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboard.yaml
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_LOG_LEVEL=debug
+      - GF_DASHBOARDS_DEBUG=true
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - secure_image_upload_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - secure_image_upload_network
+    command: --log.level=debug --config.file=/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "appservice:172.18.0.8"
+      - "storageservice:172.18.0.7"
+  
+  loki:
+    image: grafana/loki:latest
+    user: root
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - ./loki_data:/loki
+    networks:
+      - secure_image_upload_network
+
+  promtail:
+    image: grafana/promtail:latest
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - secure_image_upload_network
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
+    networks:
+      - secure_image_upload_network
+    
+
+
+networks:
+  secure_image_upload_network:
+    driver: bridge
+    enable_ipv6: false
+
+volumes:
+  grafana_data:
+  loki_data:

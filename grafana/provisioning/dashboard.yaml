@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: Combined Observability Overview
+    orgId: 1
+    folder: ''
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards/combined_observability_dashboard.json
