@@ -1,0 +1,201 @@
+{
+  "apiVersion": 1,
+  "id": null,
+  "uid": "combined_observability_dashboard",
+  "title": "Combined Observability Overview",
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "AppService Logs",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "{job=\"appservice\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Loki"
+    },
+    {
+      "id": 2,
+      "type": "logs",
+      "title": "StorageService Logs",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "{job=\"storageservice\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Loki"
+    },
+    {
+      "id": 3,
+      "type": "graph",
+      "title": "HTTP Requests Total (AppService)",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "microsoft_aspnetcore_hosting_requests_per_second_total{job=\"appservice\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 4,
+      "type": "graph",
+      "title": "HTTP Requests Total (StorageService)",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "microsoft_aspnetcore_hosting_requests_per_second_total{job=\"storageservice\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 5,
+      "type": "graph",
+      "title": "HTTP Request Duration (AppService)",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(microsoft_aspnetcore_hosting_http_server_request_duration_bucket{job=\"appservice\"}[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 6,
+      "type": "graph",
+      "title": "HTTP Request Duration (StorageService)",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(microsoft_aspnetcore_hosting_http_server_request_duration_bucket{job=\"storageservice\"}[5m])) by (le))",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 7,
+      "type": "graph",
+      "title": "HTTP Error Rate (AppService)",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "microsoft_aspnetcore_hosting_failed_requests{job=\"appservice\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 8,
+      "type": "graph",
+      "title": "HTTP Error Rate (StorageService)",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "microsoft_aspnetcore_hosting_failed_requests{job=\"storageservice\"}",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 9,
+      "type": "traces",
+      "title": "Distributed Traces",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": "Zipkin",
+          "queryType": "serviceName",
+          "query": "appservice"
+        }
+      ],
+      "datasource": "Zipkin"
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "browser"
+}
