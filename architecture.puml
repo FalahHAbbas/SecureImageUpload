@@ -1,0 +1,60 @@
+
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+actor Seller as seller
+
+package "Observability" {
+  component "Prometheus" as prometheus
+  component "Grafana" as grafana
+  component "Loki" as loki
+  component "Zipkin" as zipkin
+}
+
+package "SecureImageUpload" {
+
+  package "AppService" {
+    component "ProductsController" as products_controller
+    component "HmacService" as app_hmac_service
+    component "ApiKeyAuthMiddleware" as api_key_middleware
+  }
+
+  package "StorageService" {
+    component "UploadController" as upload_controller
+    component "StorageController" as storage_controller
+    component "HmacSignatureValidator" as storage_hmac_validator
+  }
+
+}
+
+Rel(seller, products_controller, "1. Request Upload URL", "HTTP/POST")
+Rel(products_controller, app_hmac_service, "Sign Metadata")
+Rel(products_controller, upload_controller, "Get Pre-signed URL", "HTTP/GET")
+
+Rel(seller, upload_controller, "2. Upload Image", "HTTP/POST")
+Rel(upload_controller, storage_hmac_validator, "Validate Signature")
+
+Rel(seller, products_controller, "3. Create Product", "HTTP/POST")
+Rel(products_controller, storage_controller, "Verify Image Existence", "HTTP/GET")
+
+Rel(app_hmac_service, storage_hmac_validator, "Uses Same Secret Key")
+
+Rel(products_controller, prometheus, "Exposes Metrics")
+Rel(upload_controller, prometheus, "Exposes Metrics")
+Rel(storage_controller, prometheus, "Exposes Metrics")
+
+Rel(products_controller, loki, "Sends Logs")
+Rel(upload_controller, loki, "Sends Logs")
+Rel(storage_controller, loki, "Sends Logs")
+
+Rel(products_controller, zipkin, "Sends Traces")
+Rel(upload_controller, zipkin, "Sends Traces")
+Rel(storage_controller, zipkin, "Sends Traces")
+
+Rel(grafana, prometheus, "Queries")
+Rel(grafana, loki, "Queries")
+Rel(grafana, zipkin, "Queries")
+
+@enduml
